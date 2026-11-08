@@ -1,0 +1,26 @@
+{
+  "name": "reto-aeropuerto-2026",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Resultados, diplomas virtuales y PDF del Reto Aeropuerto 7ma Edición (Bucaramanga 2026)",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "datos": "node tools/build.js",
+    "items": "node tools/items.js",
+    "extraer": "node tools/extract.js",
+    "iniciar": "node server.js",
+    "probar": "node tests/run-tests.js"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "0.1.100",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "3.11.174",
+    "qrcode-generator": "1.4.4"
+  },
+  "devDependencies": {
+    "puppeteer-core": "23.11.1"
+  }
+}

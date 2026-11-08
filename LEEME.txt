@@ -1,0 +1,120 @@
+================================================================================
+  RETO AEROPUERTO 7MA EDICION - Resultados, diplomas virtuales y PDF oficial
+================================================================================
+
+QUE ES
+------
+Sitio web estatico (HTML/CSS/JS vanilla) que permite consultar los resultados
+de un evento de running, buscar y filtrar deportistas, ver y descargar el
+diploma de cada uno en PDF (1 hoja, A4 horizontal), imprimirlo y compartirlo
+por WhatsApp/QR. Tambien se puede descargar el PDF oficial de resultados.
+
+Todo funciona sin backend, sin CDN y sin conexión a internet (file://).
+
+DATOS
+-----
+Toda la informacion proviene exclusivamente de los dos PDF del evento:
+  - FINAL X CATEGORIAS.pdf  (clasificacion por categoria y genero)
+  - DIPLOMAS.pdf            (un diploma por deportista, hoja horizontal)
+
+No se inventan nombres, tiempos, dorsales ni categorias. Si falta un dato,
+se muestra "—".
+
+CARPETA DE TRABAJO
+------------------
+Todos los archivos de la app viven en App/ junto a los PDF originales.
+Los PDF originales NO se modifican.
+
+Estructura:
+  App/
+    index.html          App principal
+    styles.css          Estilos (responsive, accesible, impresion)
+    app.js              Logica de la interfaz
+    print.html          Impresion A4 horizontal del diploma (?dorsal=XXXX)
+    data.js             window.EVENT_DATA (carga primero, file://)
+    data.json           Misma data para uso externo / API
+    vendor/pdf-lib.min.js   Generador de PDF del diploma (cliente)
+    vendor/qrcode.js        Generador de codigos QR
+    assets/             PDFs copiados y QR (resultados-oficiales.pdf,
+                        diplomas-oficiales.pdf, qr-sitio.svg, qr-whatsapp.png)
+    diplomas/img/d-XXXX.webp  Imagen de cada diploma (dorsal de 4 digitos)
+    tools/              Scripts de construccion y extraccion (no se desplegan)
+    server.js           Servidor local de desarrollo (MIME, no-store, LAN)
+    iniciar.bat         Doble clic para abrir en el navegador
+    LEEME.txt           Este archivo
+    README.md           Documentacion completa y despliegue
+
+COMO ABRIR
+----------
+Opcion A (navegador directo, file://):
+  Abrir App/index.html en Chrome o Edge.
+  Los datos y las imagenes cargan. La descarga del diploma usa el fallback
+  del PDF oficial porque file:// bloquea fetch/XHR.
+
+Opcion B (servidor local, recomendado):
+  1. Ejecutar iniciar.bat  (o: node server.js)
+  2. El navegador se abre en http://localhost:5173/
+  3. Desde otra PC de la red LAN: http://<IP>:5173/
+
+FUNCIONES
+---------
+1. Buscar: por nombre, dorsal o ciudad (sin tildes: "garcia" encuentra
+   "García"). Atajo de teclado: / para enfocar el buscador.
+2. Filtrar: pills de distancia con conteo, segmento de genero, orden.
+3. "Cargar mas": 60 en 60.
+4. Ver diploma: clic en cualquier fila -> modal con imagen, posiciones,
+   tiempo, ritmo, velocidad y categoria.
+5. Descargar diploma PDF (1 pagina): genera un PDF con solo esa pagina
+   del diploma, calidad original, listo para imprimir A4 horizontal.
+6. Imprimir diploma: boton "Imprimir A4" abre print.html?dorsal=XXXX con
+   @page { size: A4 landscape } y window.print().
+7. Compartir / QR: WhatsApp (wa.me), copiar enlace, QR SVG, PNG 1024x1024
+   e impresion A4 del QR.
+8. Descargar PDF oficial de resultados.
+9. Enlace directo a un deportista: ?dorsal=195 (abre su diploma).
+
+REGENERAR DATOS Y ASSETS
+------------------------
+Si cambian los PDF del evento o se quieren regenerar los assets:
+
+  1. npm install          (instala dependencias: pdfjs-dist, pdf-lib,
+                            @napi-rs/canvas, qrcode-generator, puppeteer-core)
+  2. node tools/build.js  (idempotente: omite imagenes existentes)
+     FORCE_RENDER=1 node tools/build.js   (regenera todas las imagenes WebP)
+
+El build:
+  - Copia los PDF a assets/ (sin tocar los originales)
+  - Extrae resultados y diplomas de los PDF
+  - Renderiza cada diploma a WebP (diplomas/img/d-XXXX.webp)
+  - Genera data.js y data.json (window.EVENT_DATA)
+  - Genera assets/qr-sitio.svg y assets/qr-whatsapp.png
+  - Limpia PDFs viejos por diploma (diplomas/d-*.pdf)
+
+NOTAS DE DATOS
+--------------
+- El evento de muestra tiene 991 deportistas con diploma y 1012 registros
+  en resultados (21 DNS sin diploma).
+- 3 categorias: 10K ABIERTA (18-39), 10K MASTER A (40-49), 10K MASTER B (+50).
+- La clave de cruce entre resultados y diplomas es el numero de dorsal
+  (mas fiable que el nombre).
+- Los diplomas se muestran recortando la pagina correspondiente del PDF
+  unico DIPLOMAS.pdf (no se genera un PDF por diploma para evitar pesos
+  enormes de cientos de MB).
+
+PRUEBAS AUTOMATIZADAS
+---------------------
+  npm test              (node tests/run-tests.js)
+
+Las pruebas verifican: sintaxis de JS, UI (60 filas, contador, busqueda,
+modal, descarga de PDF, filtros, ?dorsal, impresion, movil 390px, 0 errores
+de consola), file:// fallback, assets (MIME, PDFs íntegros) y analytics.
+
+DESPLIEGUE (VERCEL)
+-------------------
+Consultar README.md para la URL de produccion y los pasos de despliegue.
+No se publican: node_modules, tools/, server.js, package.json,
+iniciar.bat, LEEME.txt, README.md.
+
+================================================================================
+  Fin de LEEME.txt
+================================================================================

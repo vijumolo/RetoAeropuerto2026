@@ -1,0 +1,8 @@
+node_modules/
+.vercel/
+*.log
+tmp-*
+tests/artifacts/
+.env
+.env.*
+!.env.example

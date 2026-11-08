@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Imprimir diploma · Reto Aeropuerto</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --ink:#241a33; --brand:#4a1d6e; --muted:#75658a; --paper:#f7f2e8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #1c1229; }
+  body { font-family: "Segoe UI", system-ui, Arial, sans-serif; color: var(--ink); }
+  .toolbar {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 12px 18px; background: #241a33; color: #fff;
+  }
+  .toolbar strong { font-size: 14px; }
+  .toolbar span { color: #cfc1e3; font-size: 12px; }
+  .toolbar .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 40px; padding: 8px 14px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08);
+    color: #fff; text-decoration: none; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer;
+  }
+  .btn:hover { background: rgba(255,255,255,.18); color: #fff; }
+  .btn-primary { background: #1f9d55; border-color: #1f9d55; }
+  .page {
+    min-height: 100vh; display: grid; place-items: center;
+    padding: 24px 16px;
+  }
+  .sheet {
+    width: min(1123px, 100%);
+    aspect-ratio: 297 / 210;
+    background: #fff; box-shadow: 0 24px 80px rgba(0,0,0,.4);
+    display: grid; place-items: center; padding: 0;
+  }
+  .sheet img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .status { color: #e8dff2; font-size: 13px; text-align: center; margin: 10px 0 0; }
+  .status a { color: #f4d58d; }
+  .error { padding: 30px; color: #fff; text-align: center; }
+  .error h1 { margin: 0 0 8px; }
+  @media (max-width: 700px) {
+    .toolbar { align-items: flex-start; flex-direction: column; }
+    .page { padding: 12px 8px; }
+  }
+  @page { size: A4 landscape; margin: 0; }
+  @media print {
+    html, body { background: #fff; }
+    .toolbar, .status, .error { display: none !important; }
+    .page { min-height: 0; padding: 0; display: block; }
+    .sheet {
+      width: 297mm; height: 210mm; aspect-ratio: auto;
+      box-shadow: none; page-break-after: avoid;
+    }
+    .sheet img { width: 100%; height: 100%; object-fit: contain; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <div>
+    <strong>Imprimir diploma</strong><br>
+    <span id="who">Cargando…</span>
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" type="button" onclick="window.print()">Imprimir</button>
+    <a class="btn" id="pdfLink" href="assets/diplomas-oficiales.pdf" target="_blank" rel="noopener">Abrir PDF oficial</a>
+    <a class="btn" href="index.html">Volver al sitio</a>
+  </div>
+</div>
+<div class="page">
+  <div class="sheet" id="sheet">
+    <img id="diploma" alt="Diploma" width="1188" height="918">
+  </div>
+</div>
+<p class="status" id="status">Preparando la impresión…</p>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  'use strict';
+  var data = window.EVENT_DATA;
+  var params;
+  try { params = new URLSearchParams(location.search); } catch (e) { params = null; }
+  var dorsal = params ? params.get('dorsal') : null;
+  var img = document.getElementById('diploma');
+  var status = document.getElementById('status');
+  var who = document.getElementById('who');
+  var sheet = document.getElementById('sheet');
+  var printed = false;
+
+  function fail(msg) {
+    sheet.outerHTML = '<div class="error"><h1>No se pudo preparar el diploma</h1><p>' + msg + '</p></div>';
+    status.textContent = msg;
+    who.textContent = 'Sin diploma';
+  }
+  if (!data || !data.event || !Array.isArray(data.athletes)) return fail('Faltan los datos del evento (data.js).');
+  var a = dorsal ? data.athletes.find(function (x) { return String(x.dorsal) === String(dorsal); }) : null;
+  if (!a) return fail('No se encontró el dorsal indicado. Usa ?dorsal=XXXX.');
+  if (!a.hasDiploma) return fail('Este deportista no tiene diploma virtual.');
+
+  document.title = 'Diploma · ' + a.name + ' · ' + data.event.name;
+  who.textContent = a.name + ' · Dorsal ' + a.dorsal + ' · ' + a.catLabel;
+  img.alt = 'Diploma de ' + a.name;
+  document.getElementById('pdfLink').href = 'assets/diplomas-oficiales.pdf#page=' + a.diplomaPage;
+  status.innerHTML = 'Si la impresión no inicia sola, pulsa <strong>Imprimir</strong>. Formato A4 horizontal.';
+
+  function doPrint() {
+    if (printed) return;
+    printed = true;
+    setTimeout(function () {
+      try { window.print(); } catch (e) { /* el navegador puede bloquearlo */ }
+    }, 180);
+  }
+  img.addEventListener('load', doPrint);
+  img.addEventListener('error', function () {
+    status.innerHTML = 'No se pudo cargar la imagen. <a href="assets/diplomas-oficiales.pdf#page=' + a.diplomaPage + '" target="_blank" rel="noopener">Abrir la página en el PDF oficial</a>.';
+  });
+  img.src = a.diplomaImg;
+  if (img.complete && img.naturalWidth) doPrint();
+})();
+</script>
+</body>
+</html>
